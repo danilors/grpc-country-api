@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "br.com.danilors.country";
+option java_outer_classname = "CountryProto";
+
+package country;
+
+service CountryService {
+  rpc getCountry(CountryRequest) returns (CountryResponse);
+}
+
+message CountryRequest {
+  string code = 1;
+}
+
+message CountryResponse {
+  string code = 1;
+  string description = 2;
+}

@@ -1,4 +1,4 @@
-package br.com.danilors.country_client;
+package br.com.danilors.country.client;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
