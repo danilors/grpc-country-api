@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  country-server:
+    build:
+      context: ./country-server
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    networks:
+      - grpc-country-net
+
+  country-client:
+    build:
+      context: ./country-client
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      country-server:
+        condition: service_healthy
+    networks:
+      - grpc-country-net
+    environment:
+      - GRPC_SERVER_HOST=country-server
+
+networks:
+  grpc-country-net:
+    driver: bridge
