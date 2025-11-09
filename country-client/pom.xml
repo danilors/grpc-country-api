@@ -3,10 +3,9 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.7</version>
-		<relativePath/> <!-- lookup parent from repository -->
+		<groupId>br.com.danilors.country</groupId>
+		<artifactId>grpc-country-api</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<groupId>br.com.danilors</groupId>
 	<artifactId>country-client</artifactId>
@@ -26,12 +25,6 @@
 		<tag/>
 		<url/>
 	</scm>
-	<properties>
-		<java.version>25</java.version>
-		<grpc.version>1.76.0</grpc.version>
-		<protobuf-java.version>4.32.1</protobuf-java.version>
-		<spring-grpc.version>0.12.0</spring-grpc.version>
-	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -40,6 +33,19 @@
 		<dependency>
 			<groupId>io.grpc</groupId>
 			<artifactId>grpc-services</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-stub</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.grpc</groupId>
+			<artifactId>grpc-protobuf</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.reactivex.rxjava3</groupId>
+			<artifactId>rxjava</artifactId>
+			<version>3.1.3</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.grpc</groupId>
@@ -57,17 +63,6 @@
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.springframework.grpc</groupId>
-				<artifactId>spring-grpc-dependencies</artifactId>
-				<version>${spring-grpc.version}</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
 
 	<build>
 		<plugins>
