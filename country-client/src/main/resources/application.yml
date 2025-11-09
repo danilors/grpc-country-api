@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: country-client
+grpc:
+  server:
+    host: ${GRPC_SERVER_HOST:localhost}
+    port: 9090

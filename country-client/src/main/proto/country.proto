@@ -8,7 +8,10 @@ package country;
 
 service CountryService {
   rpc getCountry(CountryRequest) returns (CountryResponse);
+  rpc listAllCountries(AllCountriesRequest) returns (stream CountryResponse);
 }
+
+message AllCountriesRequest {}
 
 message CountryRequest {
   string code = 1;

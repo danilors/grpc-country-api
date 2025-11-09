@@ -1,10 +1,13 @@
 package br.com.danilors.country.client.client;
 
+import br.com.danilors.country.AllCountriesRequest;
 import br.com.danilors.country.CountryRequest;
 import br.com.danilors.country.CountryResponse;
 import br.com.danilors.country.CountryServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.stub.StreamObserver;
+import io.reactivex.rxjava3.core.Flowable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +27,7 @@ public class CountryGrpcClient {
 
     private ManagedChannel channel;
     private CountryServiceGrpc.CountryServiceBlockingStub blockingStub;
+    private CountryServiceGrpc.CountryServiceStub asyncStub;
 
     @PostConstruct
     private void init() {
@@ -32,6 +36,7 @@ public class CountryGrpcClient {
                 .usePlaintext()
                 .build();
         blockingStub = CountryServiceGrpc.newBlockingStub(channel);
+        asyncStub = CountryServiceGrpc.newStub(channel);
     }
 
     public CountryResponse getCountry(String countryCode) {
@@ -40,5 +45,28 @@ public class CountryGrpcClient {
                 .build();
         log.info("Sending gRPC request: {}", request);
         return blockingStub.getCountry(request);
+    }
+
+    public Flowable<CountryResponse> listAllCountries() {
+        AllCountriesRequest request = AllCountriesRequest.newBuilder().build();
+        log.info("Sending gRPC request to list all countries");
+        return Flowable.create(emitter -> {
+            asyncStub.listAllCountries(request, new StreamObserver<>() {
+                @Override
+                public void onNext(CountryResponse value) {
+                    emitter.onNext(value);
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    emitter.onError(t);
+                }
+
+                @Override
+                public void onCompleted() {
+                    emitter.onComplete();
+                }
+            });
+        }, Flowable.bufferSize());
     }
 }
