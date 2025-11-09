@@ -7,6 +7,7 @@ import br.com.danilors.country.CountryServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.stub.StreamObserver;
+import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -67,6 +68,6 @@ public class CountryGrpcClient {
                     emitter.onComplete();
                 }
             });
-        }, Flowable.bufferSize());
+        }, BackpressureStrategy.BUFFER);
     }
 }
