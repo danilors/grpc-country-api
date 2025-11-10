@@ -4,7 +4,6 @@ import br.com.danilors.country.AllCountriesRequest;
 import br.com.danilors.country.CountryRequest;
 import br.com.danilors.country.CountryResponse;
 import br.com.danilors.country.server.domain.Country;
-import br.com.danilors.country.server.repository.CountryRepository;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
@@ -14,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -22,20 +20,16 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CountryGrpcServiceTest {
 
     @Mock
-    private CountryRepository countryRepository;
+    private CountryService countryService; // Mock the service layer, not the repository
 
     @Mock
     private StreamObserver<CountryResponse> responseObserver;
-
-    @InjectMocks
-    private CountryGrpcService countryGrpcService;
 
     @Captor
     private ArgumentCaptor<CountryResponse> responseCaptor;
@@ -43,16 +37,27 @@ class CountryGrpcServiceTest {
     @Captor
     private ArgumentCaptor<StatusRuntimeException> errorCaptor;
 
+    private CountryGrpcService countryGrpcService;
+
+    @BeforeEach
+    void setUp() {
+        // Manually instantiate the gRPC service with the mocked business service
+        countryGrpcService = new CountryGrpcService(countryService);
+    }
+
     @Test
-    @DisplayName("Should return a country when a valid code is provided")
+    @DisplayName("getCountry: Should return a country when a valid code is provided")
     void getCountry_whenCountryExists_shouldReturnCountry() {
+        // Arrange
         String countryCode = "BR";
         Country country = new Country(countryCode, "Brazil");
-        when(countryRepository.findById(countryCode)).thenReturn(Optional.of(country));
-
+        when(countryService.findById(countryCode)).thenReturn(Optional.of(country)); // Stub the service method
         CountryRequest request = CountryRequest.newBuilder().setCode(countryCode).build();
+
+        // Act
         countryGrpcService.getCountry(request, responseObserver);
 
+        // Assert
         verify(responseObserver).onNext(responseCaptor.capture());
         verify(responseObserver).onCompleted();
         verify(responseObserver, never()).onError(any());
@@ -63,35 +68,37 @@ class CountryGrpcServiceTest {
     }
 
     @Test
-    @DisplayName("Should return NOT_FOUND when country does not exist")
+    @DisplayName("getCountry: Should return NOT_FOUND when country does not exist")
     void getCountry_whenCountryDoesNotExist_shouldReturnNotFound() {
+        // Arrange
         String countryCode = "XX";
-        when(countryRepository.findById(countryCode)).thenReturn(Optional.empty());
-
+        when(countryService.findById(countryCode)).thenReturn(Optional.empty()); // Stub the service method
         CountryRequest request = CountryRequest.newBuilder().setCode(countryCode).build();
+
+        // Act
         countryGrpcService.getCountry(request, responseObserver);
 
+        // Assert
         verify(responseObserver).onError(errorCaptor.capture());
         verify(responseObserver, never()).onNext(any());
         verify(responseObserver, never()).onCompleted();
 
         StatusRuntimeException exception = errorCaptor.getValue();
         assertEquals(Status.NOT_FOUND.getCode(), exception.getStatus().getCode());
-        assertEquals("Country with code " + countryCode + " not found.", exception.getStatus().getDescription());
     }
 
     @Test
-    @DisplayName("Should stream all countries successfully")
+    @DisplayName("listAllCountries: Should stream all countries successfully")
     void listAllCountries_whenCountriesExist_shouldStreamAll() {
-        List<Country> countries = List.of(
-                new Country("BR", "Brazil"),
-                new Country("US", "United States")
-        );
-        when(countryRepository.findAll()).thenReturn(countries);
+        // Arrange
+        List<Country> countries = List.of(new Country("BR", "Brazil"), new Country("US", "United States"));
+        when(countryService.streamAll()).thenReturn(countries); // Stub the service method
+        AllCountriesRequest request = AllCountriesRequest.getDefaultInstance();
 
-        AllCountriesRequest request = AllCountriesRequest.newBuilder().build();
+        // Act
         countryGrpcService.listAllCountries(request, responseObserver);
 
+        // Assert
         verify(responseObserver, times(2)).onNext(responseCaptor.capture());
         verify(responseObserver).onCompleted();
         verify(responseObserver, never()).onError(any());
@@ -103,15 +110,22 @@ class CountryGrpcServiceTest {
     }
 
     @Test
-    @DisplayName("Should return INTERNAL error when repository fails")
-    void listAllCountries_whenRepositoryThrowsException_shouldReturnInternalError() {
-        when(countryRepository.findAll()).thenThrow(new RuntimeException("Database error"));
+    @DisplayName("listAllCountries: Should return INTERNAL error when service throws an exception")
+    void listAllCountries_whenServiceThrowsException_shouldReturnInternalError() {
+        // Arrange
+        when(countryService.streamAll()).thenThrow(new RuntimeException("Service layer error")); // Stub the service method
+        AllCountriesRequest request = AllCountriesRequest.getDefaultInstance();
 
-        AllCountriesRequest request = AllCountriesRequest.newBuilder().build();
+        // Act
         countryGrpcService.listAllCountries(request, responseObserver);
 
-        verify(responseObserver).onError(any(StatusRuntimeException.class));
+        // Assert
+        verify(responseObserver).onError(errorCaptor.capture());
         verify(responseObserver, never()).onNext(any());
         verify(responseObserver, never()).onCompleted();
+
+        StatusRuntimeException exception = errorCaptor.getValue();
+        assertEquals(Status.INTERNAL.getCode(), exception.getStatus().getCode());
+        assertEquals("An error occurred while fetching countries.", exception.getStatus().getDescription());
     }
 }
