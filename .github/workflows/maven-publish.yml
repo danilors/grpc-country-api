@@ -51,6 +51,7 @@ jobs:
           fetch-depth: 0
 
       - name: Create Pull Request
+        id: cpr
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -60,3 +61,11 @@ jobs:
           branch: auto-merge/develop-to-main
           base: main
           delete-branch: true
+
+      - name: Check for Pull Request creation
+        if: steps.cpr.outputs.pull-request-number
+        run: echo "Pull Request #${{ steps.cpr.outputs.pull-request-number }} created."
+
+      - name: No Pull Request created
+        if: ${{ !steps.cpr.outputs.pull-request-number }}
+        run: echo "No pull request was created because there were no changes to commit."
