@@ -31,7 +31,7 @@ public class CountryGrpcClient {
     private CountryServiceGrpc.CountryServiceStub asyncStub;
 
     @PostConstruct
-    private void init() {
+    public void init() {
         log.info("Initializing gRPC client for server at {}:{}", host, port);
         channel = ManagedChannelBuilder.forAddress(host, port)
                 .usePlaintext()

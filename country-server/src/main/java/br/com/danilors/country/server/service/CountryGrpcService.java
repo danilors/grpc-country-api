@@ -4,8 +4,6 @@ import br.com.danilors.country.AllCountriesRequest;
 import br.com.danilors.country.CountryRequest;
 import br.com.danilors.country.CountryResponse;
 import br.com.danilors.country.CountryServiceGrpc;
-import br.com.danilors.country.server.domain.Country;
-import br.com.danilors.country.server.repository.CountryRepository;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
@@ -17,17 +15,17 @@ public class CountryGrpcService extends CountryServiceGrpc.CountryServiceImplBas
 
     private static final Logger log = LoggerFactory.getLogger(CountryGrpcService.class);
 
-    private final CountryRepository countryRepository;
+    private final CountryService countryService;
 
-    public CountryGrpcService(CountryRepository countryRepository) {
-        this.countryRepository = countryRepository;
+    public CountryGrpcService(CountryService countryService) {
+        this.countryService = countryService;
     }
 
     @Override
     public void getCountry(CountryRequest request, StreamObserver<CountryResponse> responseObserver) {
         log.debug("Received getCountry request for code: {}", request.getCode());
 
-        countryRepository.findById(request.getCode())
+        countryService.findById(request.getCode())
                 .ifPresentOrElse(country -> {
                     log.info("Found country: {}", country.getDescription());
                     CountryResponse response = CountryResponse.newBuilder()
@@ -48,7 +46,7 @@ public class CountryGrpcService extends CountryServiceGrpc.CountryServiceImplBas
     public void listAllCountries(AllCountriesRequest request, StreamObserver<CountryResponse> responseObserver) {
         log.info("Received request to list all countries");
         try {
-            countryRepository.findAll().forEach(country -> {
+            countryService.streamAll().forEach(country -> {
                 CountryResponse response = CountryResponse.newBuilder()
                         .setCode(country.getCode())
                         .setDescription(country.getDescription())
