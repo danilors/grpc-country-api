@@ -13,6 +13,7 @@ on:
 
 jobs:
   build:
+    id: build-job
 
     runs-on: ubuntu-latest
     permissions:
@@ -36,3 +37,27 @@ jobs:
       run: mvn deploy -s $GITHUB_WORKSPACE/settings.xml
       env:
         GITHUB_TOKEN: ${{ github.token }}
+
+  create-pr:
+    needs: build
+    if: success() && github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: Automated PR from develop to main"
+          title: "Automated PR: Merge develop into main"
+          body: "This pull request automatically merges changes from the develop branch into main after a successful build."
+          branch: auto-merge/develop-to-main
+          base: main
+          delete-branch: true
